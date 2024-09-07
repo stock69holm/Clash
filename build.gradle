@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id("io.papermc.paperweight.userdev") version "1.7.2"
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'net.stockholm'
+version = '1.0'
+
+repositories {
+    gradlePluginPortal()
+    mavenCentral()
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+}
+
+dependencies {
+    paperweight.paperDevBundle("1.17.1-R0.1-SNAPSHOT")
+    implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+    implementation 'com.github.pengrad:java-telegram-bot-api:7.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'org.json:json:20210307'
+    implementation 'mysql:mysql-connector-java:8.0.33'
+}
+
+shadowJar {
+    relocate 'org.apache.http', 'net.stockholm.shaded.org.apache.http'
+}
+
+jar {
+    dependsOn shadowJar
+    archiveClassifier.set('')
+}
+
+def targetJavaVersion = 17
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+tasks.register('copyJar', Copy) {
+    dependsOn tasks.reobfJar
+    from("$buildDir/libs/Clash-${version}.jar")
+    into "C:/Users/matve/OneDrive/Documents/ServerProjects/Clash/plugins"
+}
+
+tasks.reobfJar.finalizedBy(tasks.copyJar)

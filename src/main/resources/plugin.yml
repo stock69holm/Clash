@@ -1,0 +1,5 @@
+name: Clash
+version: '${version}'
+main: net.stockholm.clash.Main
+api-version: '1.17'
+authors: [stockholm]
